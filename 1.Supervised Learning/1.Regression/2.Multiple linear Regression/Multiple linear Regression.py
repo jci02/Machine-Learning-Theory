@@ -9,5 +9,27 @@ class LinReg:
         self.is_fitted_ = False
 
     def fit(X,y):
+        #if is_instance()
         pass
-        if is_instance()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    
