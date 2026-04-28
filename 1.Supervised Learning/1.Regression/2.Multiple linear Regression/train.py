@@ -1,0 +1,73 @@
+import numpy as np # random numbers and arrays
+import plotly.express as px # for plotting
+import matplotlib.pyplot as plt
+from sklearn.linear_model import LinearRegression # for Linear Regression
+from sklearn.model_selection import train_test_split # to split dataset into train and test set
+from sklearn.datasets import make_regression # create Regression toy data
+import plotly.io as pio # set where plots are shown
+from LinearRegression import LinReg, mse
+import plotly.graph_objects as go # for plotting
+
+x, y = make_regression(n_samples=100, n_features=1, noise=10, random_state=1925)
+x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.2, random_state=2025)
+
+plt.figure(figsize=(10,10))
+cmap = plt.get_cmap('viridis')
+plt.subplot(1,2,1)
+plt.scatter(x=x_train.flatten(), y=y_train,color=cmap(0.9),label="Train Data points")
+plt.xlabel("x")
+plt.ylabel("y")
+plt.title("Train data points")
+plt.legend()
+
+model = LinReg(copy_X=False)
+model.fit(x_train,y_train)
+print(f"Our solution:bias = {model.bias:.2f} and coefficients={model.weights[0]:.4f}")
+
+model2 = LinearRegression(copy_X=False,fit_intercept=True)
+model2.fit(x_train,y_train)
+print(f"Pythons solution:bias = {model2.intercept_:.2f} and coefficients={model2.coef_[0]:.4f}")
+
+y_hat = model.predict(x_test)
+print(f"MSE={mse(y_test,y_hat)}")
+plt.subplot(1,2,2)
+plt.scatter(x=x_test.flatten(), y=y_test,color=cmap(0.9),label="Test Data points")
+plt.xlabel("x")
+plt.ylabel("y")
+plt.title("Test data points")
+plt.plot(x_test,y_hat,color="red",label="Fitted line")
+plt.legend()
+
+
+
+X, y = make_regression(n_samples=100, n_features=2, noise=10, random_state=1822)
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=1713)
+pio.renderers.default = "browser" # to show plot in browser 
+fig = px.scatter_3d(x=X_train[:,0],y=X_train[:,1],z=y_train,labels={"x":"x1","y":"x2","z":"x3"})
+
+model = LinReg()
+model.fit(X_train,y_train)
+print(f"bias = {model.bias:.2f} and coefficients={np.round(model.weights,3)}")
+
+model2 = LinearRegression(fit_intercept=True)
+model2.fit(X_train,y_train)
+print(f"Pythons:bias = {model2.intercept_:.2f} and coefficients={np.round(model2.coef_,3)}")
+
+# Create grid for surface
+x1_range = np.linspace(X_train[:,0].min(), X_train[:,0].max(), 20)
+x2_range = np.linspace(X_train[:,1].min(), X_train[:,1].max(), 20)
+
+x1_grid, x2_grid = np.meshgrid(x1_range, x2_range)
+
+# Flatten grid for prediction
+grid = np.c_[x1_grid.ravel(), x2_grid.ravel()]
+
+# Predict using your model
+y_grid = model.predict(grid).reshape(x1_grid.shape)
+
+# Add surface to figure
+fig.add_trace(go.Surface(x=x1_grid,y=x2_grid,z=y_grid,opacity=0.6,showscale=False))
+fig.show() 
+
+plt.show() # plt.show() is a blocking GUI call in normal Python scripts: execution pauses there until the plot window is closed
+plt.tight_layout()
