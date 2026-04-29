@@ -6,7 +6,9 @@ from sklearn.model_selection import train_test_split # to split dataset into tra
 from sklearn.datasets import make_regression # create Regression toy data
 import plotly.io as pio # set where plots are shown
 from LinearRegression import LinReg, mse
+from LinearRegressionGD import LinRegGD
 import plotly.graph_objects as go # for plotting
+import plotly.colors as pc # for more color variety using plotly.express as px
 
 x, y = make_regression(n_samples=100, n_features=1, noise=10, random_state=1925)
 x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.2, random_state=2025)
@@ -68,6 +70,42 @@ y_grid = model.predict(grid).reshape(x1_grid.shape)
 # Add surface to figure
 fig.add_trace(go.Surface(x=x1_grid,y=x2_grid,z=y_grid,opacity=0.6,showscale=False,showlegend=True,name="Fitted plane"))
 fig.show() 
+
+
+
+X, y = make_regression(n_samples=100, n_features=2, noise=10, random_state=925)
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=1050)
+model = LinRegGD(intercept=True)
+model.fit(X,y)
+print(f"Estimated bias={model.bias} and weights={model.weights}:")
+
+# Plot data points
+fig = px.scatter_3d(x=X[:,0], y=X[:,1], z=y,title="Data",labels={'x':'x1','y':'x2','z':'y'})
+
+colors = pc.qualitative.Plotly  # nice default palette
+for idx, i in enumerate([0, 10, 20, 50, 100, len(model.theta_history)-1]):
+    
+    # Grid
+    grid_x1, grid_x2 = np.meshgrid(np.linspace(X[:,0].min(), X[:,2].max(), 30),np.linspace(X[:,2].min(), X[:,2].max(), 30))
+
+    grid_X = np.column_stack((np.ones(grid_x1.size),grid_x1.ravel(),grid_x2.ravel()))
+
+    # Predictions
+    surface_pred = (grid_X @ model.theta_history[i]).reshape(grid_x1.shape)
+
+    # Pick color
+    color = colors[idx % len(colors)]
+
+    # Create constant colorscale
+    colorscale = [[0, color], [1, color]]
+
+    fig.add_trace(go.Surface(x=grid_x1,y=grid_x2,z=surface_pred,opacity=0.5,
+                             showscale=False,colorscale=colorscale,name=f"Iteration {i}",showlegend=True))
+
+
+fig.update_layout(width=700, height=500)
+fig.show()
+
 
 plt.show() # plt.show() is a blocking GUI call in normal Python scripts: execution pauses there until the plot window is closed
 plt.tight_layout()
