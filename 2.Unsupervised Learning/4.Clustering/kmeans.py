@@ -78,10 +78,8 @@ class KMeans:
     
 
 if __name__ == "__main__":
-
     # create toy data
     np.random.seed(42)
-
     X1 = np.random.randn(100, 2) + np.array([0, 0])
     X2 = np.random.randn(100, 2) + np.array([5, 5])
     X3 = np.random.randn(100, 2) + np.array([0, 5])
@@ -95,7 +93,6 @@ if __name__ == "__main__":
     labels = kmeans.labels
     means = kmeans.means
 
-
     # plot
     plt.figure(figsize=(7, 6))
 
@@ -104,8 +101,7 @@ if __name__ == "__main__":
         plt.scatter(cluster[:, 0], cluster[:, 1], label=f"Cluster {k}")
 
     # centroids
-    plt.scatter(means[:, 0], means[:, 1],
-                c="black", marker="x", s=200, label="Centroids")
+    plt.scatter(means[:, 0], means[:, 1],c="black", marker="x", s=200, label="Centroids")
 
     plt.title("K-Means Clustering")
     plt.legend()
