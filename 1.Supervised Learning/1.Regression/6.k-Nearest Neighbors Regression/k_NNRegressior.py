@@ -7,9 +7,9 @@ class KNNRegressor:
         if distance not in ["euclidean", "manhattan"]:
             raise ValueError("distance must be 'euclidean' or 'manhattan'")
         
-        self.k = k
-        self.distance = distance
-        self.weighted = weighted
+        self.k = k # number of neighbors
+        self.distance = distance # distance measure
+        self.weighted = weighted # indicator wether weighted or unweighted predictions
 
         self.X_train = None
         self.y_train = None
@@ -17,9 +17,9 @@ class KNNRegressor:
 
     def _compute_distance(self, x1, x2):
         if self.distance == "euclidean":
-            return np.sqrt(np.sum((x1 - x2)**2))
+            return np.sqrt(np.sum((x1 - x2)**2)) # euclidean distance
         elif self.distance == "manhattan":
-            return np.sum(np.abs(x1 - x2))
+            return np.sum(np.abs(x1 - x2)) # manhatten distance
 
     def fit(self, X, y):
         X = np.array(X)
@@ -28,8 +28,8 @@ class KNNRegressor:
         if X.shape[0] != len(y):
             raise ValueError("X and y must have same number of samples")
 
-        self.X_train = X
-        self.y_train = y
+        self.X_train = X # X itself is now an attribute (lazy leaner)
+        self.y_train = y # y itself is now an attribute (lazy leaner)
         self.is_fitted = True
         return self
 
@@ -46,7 +46,7 @@ class KNNRegressor:
 
         for x in X:
             # compute all distances
-            distances = [(self._compute_distance(x, x_train), idx)for idx, x_train in enumerate(self.X_train)]
+            distances = [(self._compute_distance(x, x_train), idx)for idx, x_train in enumerate(self.X_train)] 
 
             # sort by distance
             distances_sorted = sorted(distances, key=lambda t: t[0])
@@ -54,15 +54,15 @@ class KNNRegressor:
             # select k nearest
             neighbors = distances_sorted[:self.k]
 
-            neighbor_indices = [idx for (_, idx) in neighbors]
-            neighbor_distances = np.array([dist for (dist, _) in neighbors])
-            neighbor_values = self.y_train[neighbor_indices]
+            neighbor_indices = [idx for (_, idx) in neighbors] # ignore distances and get indeces
+            neighbor_distances = np.array([dist for (dist, _) in neighbors]) # ignore index and get distances
+            neighbor_values = self.y_train[neighbor_indices] # filter y values 
 
-            if self.weighted:
+            if self.weighted: # weighted predictions
                 weights = 1 / (neighbor_distances + 1e-9)
                 pred = np.sum(weights * neighbor_values) / np.sum(weights)
             else:
-                pred = np.mean(neighbor_values)
+                pred = np.mean(neighbor_values) # unweighted predictions
 
             predictions.append(pred)
 
@@ -76,10 +76,8 @@ class KNNRegressor:
 
         x = np.array(x)
 
-        distances = [
-            (self._compute_distance(x, x_train), idx)
-            for idx, x_train in enumerate(self.X_train)
-        ]
+        # get distances and numerate them
+        distances = [(self._compute_distance(x, x_train), idx)for idx, x_train in enumerate(self.X_train)]
 
         distances_sorted = sorted(distances, key=lambda t: t[0])
         neighbors = distances_sorted[:self.k]
