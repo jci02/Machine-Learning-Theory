@@ -1,11 +1,11 @@
 import numpy as np # for arrays
-from sklearn.linear_model import Ridge # for Ridge Regression
+from sklearn.linear_model import Lasso # for Ridge Regression
 import matplotlib.pyplot as plt # for plotting
 from sklearn.metrics import mean_squared_error # for mse
 from sklearn.datasets import make_regression # create regression toy data
 from sklearn.model_selection import train_test_split # for splitting data in train and test set
 
-class RidgeRegGD:
+class LassoRegGD:
     def __init__(self, intercept=True, lbda=0.0, lr=0.001, max_iter=5000, tol=1e-6):
         if not isinstance(intercept, bool):
             raise ValueError("intercept must be boolean")
@@ -37,38 +37,38 @@ class RidgeRegGD:
         if X.shape[0] != len(y):
             raise ValueError("X has incompatible shape with y")
 
-        # add intercept column if requested
+        # add intercept
         if self.intercept:
             X = np.c_[np.ones((X.shape[0],1)), X]
 
         n_samples, n_features = X.shape
 
-        # initialize theta
         theta = np.random.uniform(0,1,n_features)
         self.theta_history = [theta.copy()]
 
         for _ in range(self.max_iter):
 
-            # residual part
-            grad_ls = -(2/n_samples) * X.T @ (y - X @ theta) # gradient
+            # least squares gradient
+            grad_ls = -(2/n_samples) * X.T @ (y - X @ theta)
 
-            # ridge penalty part
+            # lasso subgradient
             theta_tilde = theta.copy()
             if self.intercept:
-                theta_tilde[0] = 0 # do not penalize intercept
+                theta_tilde[0] = 0   # do not penalize intercept
 
-            grad_penalty = 2 * self.lbda * theta_tilde
+            grad_l1 = self.lbda * np.sign(theta_tilde)
 
-            grad = grad_ls + grad_penalty # full ridge gradient
+            # full subgradient
+            grad = grad_ls + grad_l1
 
-            theta = theta - self.lr * grad # GD update
+            # update
+            theta = theta - self.lr * grad
 
             self.theta_history.append(theta.copy())
 
             if np.linalg.norm(theta - self.theta_history[-2]) < self.tol:
                 break
 
-        # split parameters
         if self.intercept:
             self.bias = theta[0]
             self.weights = theta[1:]
@@ -93,55 +93,59 @@ class RidgeRegGD:
 
         return X @ self.weights + self.bias
     
-# Testing
-# if __name__ == "__main__": controls whether a Python file runs as a script or is imported as a module
-if __name__ == "__main__": # __name__ == "__main__" means only run this code if this file is executed directly, not imported
-    # Generate data
-    X, y = make_regression(n_samples=100, n_features=1, noise=15, random_state=1140)
+if __name__ == "__main__":
+    # Generate data (use more features to see sparsity effect)
+    X, y = make_regression(n_samples=100,n_features=5,n_informative=2,noise=10,random_state=42)
 
     # Train-test split
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=1141)
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
-    # Use full data range for smooth plotting
-    X_plot = np.linspace(X.min(), X.max(), 200).reshape(-1, 1)
+    lambdas = [0.1, 1, 10, 100]
 
-    lambdas = [0, 1, 10, 100]
-
-    plt.figure(figsize=(10, 6))
-
-    # Plot both train and test
-    plt.scatter(X_train, y_train, color="blue", alpha=0.6, label="Train data")
-    plt.scatter(X_test, y_test, color="red", alpha=0.6, label="Test data")
-
-    print("Coefficient + MSE Comparison\n")
+    print("=== Lasso: Coefficients + MSE Comparison ===\n")
 
     for lbda in lambdas:
-        # Our GD model
-        model = RidgeRegGD(intercept=True, lbda=lbda, lr=0.001)
+        # Our model
+        model = LassoRegGD(intercept=True, lbda=lbda, lr=0.001, max_iter=10000)
         model.fit(X_train, y_train)
 
         y_pred_test = model.predict(X_test)
-        y_plot = model.predict(X_plot)
-
         mse = mean_squared_error(y_test, y_pred_test)
 
-        # Adjust sklearn lambda scaling for fair comparison
-        sk_model = Ridge(alpha=lbda * len(X_train), fit_intercept=True)
+        # Sklearn model
+        sk_model = Lasso(alpha=lbda, fit_intercept=True, max_iter=10000)
         sk_model.fit(X_train, y_train)
 
         sk_y_pred_test = sk_model.predict(X_test)
         sk_mse = mean_squared_error(y_test, sk_y_pred_test)
 
-        # Plot regression line
-        plt.plot(X_plot, y_plot, label=f"λ={lbda}")
-
         print(f"Lambda = {lbda}")
-        print(f"Our weights: {model.weights}, bias: {model.bias}")
-        print(f"Sklearn weights: {sk_model.coef_}, bias: {sk_model.intercept_}")
+        print(f"Our weights:      {np.round(model.weights, 4)}")
+        print(f"Sklearn weights: {np.round(sk_model.coef_, 4)}")
+        print(f"Our bias: {model.bias:.4f} | Sklearn bias: {sk_model.intercept_:.4f}")
         print(f"Our MSE: {mse:.2f} | Sklearn MSE: {sk_mse:.2f}")
         print("-" * 60)
 
-    plt.title("Ridge Regression (Gradient Descent)")
+    # Optional visualization (1D case for plotting) 
+    # regenerate simple 1D data for plotting
+    X_1d, y_1d = make_regression(n_samples=100, n_features=1, noise=15, random_state=0)
+
+    X_train, X_test, y_train, y_test = train_test_split(X_1d, y_1d, test_size=0.2, random_state=0)
+
+    X_plot = np.linspace(X_1d.min(), X_1d.max(), 200).reshape(-1, 1)
+
+    plt.figure(figsize=(10, 6))
+    plt.scatter(X_train, y_train, alpha=0.6, label="Train data")
+    plt.scatter(X_test, y_test, alpha=0.6, label="Test data")
+
+    for lbda in lambdas:
+        model = LassoRegGD(intercept=True, lbda=lbda, lr=0.001, max_iter=10000)
+        model.fit(X_train, y_train)
+
+        y_plot = model.predict(X_plot)
+        plt.plot(X_plot, y_plot, label=f"λ={lbda}")
+
+    plt.title("Lasso Regression (GD)")
     plt.xlabel("X")
     plt.ylabel("y")
     plt.legend()

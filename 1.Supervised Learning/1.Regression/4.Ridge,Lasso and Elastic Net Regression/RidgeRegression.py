@@ -1,4 +1,9 @@
 import numpy as np # for arrays
+from sklearn.linear_model import Ridge # for Ridge Regression
+import matplotlib.pyplot as plt # for plotting
+from sklearn.metrics import mean_squared_error # for mse
+from sklearn.datasets import make_regression # create regression toy data
+from sklearn.model_selection import train_test_split # for splitting data in train and test set
 
 def standardize(X): # standardize features
     feature_means = np.mean(X, axis=0)
@@ -46,7 +51,7 @@ class RidgeReg:
         if self.intercept:
             I[0,0] = 0 # do not penalize intercept
 
-        theta = np.linalg.inv(X.T @ X + self.lbda * I) @ X.T @ y # REidge solution
+        theta = np.linalg.solve(X.T @ X + self.lbda * I, X.T @ y) # same as np.linalg.inv(X.T @ X + self.lbda * I) @ X.T @ y but better
 
         if self.intercept:
             self.bias = theta[0]
@@ -74,3 +79,59 @@ class RidgeReg:
             raise ValueError("X has different number of features than training data")
 
         return X @ self.weights + self.bias
+    
+
+# Testing
+# if __name__ == "__main__": controls whether a Python file runs as a script or is imported as a module
+if __name__ == "__main__": # __name__ == "__main__" means only run this code if this file is executed directly, not imported
+    # Generate data
+    X, y = make_regression(n_samples=100, n_features=1, noise=15, random_state=1140)
+
+    # Train-test split
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=1141)
+
+    # Use FULL range for smooth plotting
+    X_plot = np.linspace(X.min(), X.max(), 200).reshape(-1, 1)
+
+    lambdas = [0, 1, 10, 100]
+
+    plt.figure(figsize=(10, 6))
+
+    # Plot both train and test data
+    plt.scatter(X_train, y_train, color="blue", alpha=0.6, label="Train data")
+    plt.scatter(X_test, y_test, color="red", alpha=0.6, label="Test data")
+
+    print("Coefficient + MSE Comparison\n")
+
+    for lbda in lambdas:
+        # Our model
+        model = RidgeReg(intercept=True, lbda=lbda, standardize_features=False)
+        model.fit(X_train, y_train)
+
+        y_pred_test = model.predict(X_test)
+        y_plot = model.predict(X_plot)
+
+        mse = mean_squared_error(y_test, y_pred_test)
+
+        # Sklearn model
+        sk_model = Ridge(alpha=lbda, fit_intercept=True)
+        sk_model.fit(X_train, y_train)
+
+        sk_y_pred_test = sk_model.predict(X_test)
+        sk_mse = mean_squared_error(y_test, sk_y_pred_test)
+
+        # Plot regression line
+        plt.plot(X_plot, y_plot, label=f"λ={lbda}")
+
+        # Print comparison
+        print(f"Lambda = {lbda}")
+        print(f"Our weights: {model.weights}, bias: {model.bias}")
+        print(f"Sklearn weights: {sk_model.coef_}, bias: {sk_model.intercept_}")
+        print(f"Our MSE: {mse:.2f} | Sklearn MSE: {sk_mse:.2f}")
+        print("-" * 60)
+
+    plt.title("Ridge Regression (Closed Form)")
+    plt.xlabel("X")
+    plt.ylabel("y")
+    plt.legend()
+    plt.show()
