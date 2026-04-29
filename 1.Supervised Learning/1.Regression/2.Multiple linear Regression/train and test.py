@@ -45,11 +45,11 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_
 pio.renderers.default = "browser" # to show plot in browser 
 fig = px.scatter_3d(x=X_train[:,0],y=X_train[:,1],z=y_train,labels={"x":"x1","y":"x2","z":"x3"})
 
-model = LinReg()
+model = LinReg(intercept=False)
 model.fit(X_train,y_train)
 print(f"bias = {model.bias:.2f} and coefficients={np.round(model.weights,3)}")
 
-model2 = LinearRegression(fit_intercept=True)
+model2 = LinearRegression(fit_intercept=False)
 model2.fit(X_train,y_train)
 print(f"Pythons:bias = {model2.intercept_:.2f} and coefficients={np.round(model2.coef_,3)}")
 
@@ -66,7 +66,7 @@ grid = np.c_[x1_grid.ravel(), x2_grid.ravel()]
 y_grid = model.predict(grid).reshape(x1_grid.shape)
 
 # Add surface to figure
-fig.add_trace(go.Surface(x=x1_grid,y=x2_grid,z=y_grid,opacity=0.6,showscale=False))
+fig.add_trace(go.Surface(x=x1_grid,y=x2_grid,z=y_grid,opacity=0.6,showscale=False,showlegend=True,name="Fitted plane"))
 fig.show() 
 
 plt.show() # plt.show() is a blocking GUI call in normal Python scripts: execution pauses there until the plot window is closed
