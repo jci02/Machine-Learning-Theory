@@ -1,4 +1,4 @@
-import numpy as np # for random numbers and arrays
+import numpy as np # for arrays
 
 class LinReg:
     def __init__(self, intercept=True, copy_X=True):
@@ -13,6 +13,7 @@ class LinReg:
         self.X_original = None # stores original X
 
     def fit(self, X, y):
+
         X = np.array(X)
         y = np.array(y)
 
