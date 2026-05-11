@@ -7,7 +7,7 @@ import plotly.express as px # for plotting
 import plotly.graph_objects as go # for plotting
 import plotly.io as pio
 
-class AdaBoostFromScratch:
+class AdaBoostClassification:
     """
     AdaBoost for binary classification using DecisionTreeClassifier stumps.
     Labels must be {-1, +1}
@@ -105,7 +105,7 @@ if __name__ == "__main__":
     X_train, X_test, y_train, y_test = train_test_split(X,y,test_size=0.2,random_state=1020)
 
     # Train AdaBoost
-    model = AdaBoostFromScratch(n_learners=50,max_depth=1)
+    model = AdaBoostClassification(n_learners=50,max_depth=1)
 
     model.fit(X_train, y_train)
 
